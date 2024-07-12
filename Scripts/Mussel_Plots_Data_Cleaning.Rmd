@@ -1,0 +1,170 @@
+---
+title: "Mussels Plots Data Cleaning + Raw Figs"
+author: "Micaela Chapuis"
+date: "2024-07-10"
+output: html_document
+---
+
+```{r}
+library("dplyr")
+library("lubridate")
+library("stringr")
+library("ggplot2")
+```
+
+
+### Mussel Plots Data
+
+#### Data Cleaning
+
+Load in Mussel Data
+
+```{r}
+mussels <- read.csv("Data/mussel_data.csv")
+```
+
+When extracting the bed height data from pictures, if there wasn't a clump of 20 or more mussels at the 10 cm intervals where we took the measurements, then it was marked as NA. But then a lot of data (especially early data) would be excluded from figures and models.
+
+If we didn't have the overlap between A and B plots, we would add up the height of the entire B plot (60 cm) plus the height measurement until a mussel clump in the A plot. But because of the plot overlap (and because it is always different), we decided that the most consistent way of dealing with this is to change the NAs to 60 cm, which is the height of the quadrat. (This makes the data censored because the actual limit of the beds could be outside of the quadrat, that will be dealt with later on)
+
+We have to do it this early on in the script because we should do it for each of the 9 bed height measurements for each quadrat. Once we replace all the NAs, we should calculate the Avg. Height for each plot (each row) again.
+
+```{r}
+# goes through the columns with the measurements every 10cm and if there is an NA it will be replaced with the value 60
+cols <- c("M1..0", "M2..10", "M3..20", "M4..30", "M5..40", "M6..50", "M7..60", "M8..70", "M9..80")
+mussels <- mussels %>% mutate(across(cols, ~ replace(., is.na(.), 60)))
+```
+
+
+```{r}
+#take the new average of the values in the individual measurement columns (columns 6 through 14) and store them in Avg.Height
+mussels$Avg.Height <- rowMeans(mussels[ , c(6:14)])
+```
+
+Get rid of extra columns
+```{r}
+extra.columns <- names(mussels) %in% c("M1..0", "M2..10", "M3..20", "M4..30", "M5..40", "M6..50", "M7..60", "M8..70", "M9..80", "Notes", "Analyzed.By.")
+
+mussels <- mussels[,!extra.columns]
+```
+
+Changing column names
+```{r}
+# Change name of 4th and 5th columns of mussels
+names(mussels)[4] <- "Area"
+names(mussels)[5] <- "PCover"
+```
+
+Make Avg.Height column into an integer
+```{r}
+mussels$Avg.Height <- as.numeric(mussels$Avg.Height)
+```
+
+Dates are weird from the spreadsheet,
+Recode dates from Mon-Yr to yr/mm
+```{r}
+mussels$Date <- dplyr::recode(mussels$Date, "Aug-14" = "2014/08/01", "Aug-16" = "2016/08/01", "Aug-17" = "2017/08/01", "Aug-18" = "2018/08/01", "Dec-14" = "2014/12/01", "Dec-15" = "2015/12/01", "Dec-16" = "2016/12/01", "Dec-17" = "2017/12/01", "Dec-18" = "2018/12/01", "Dec-19" = "2019/12/01", "Jul-14" = "2014/07/01", "Jul-15" = "2015/07/01", "Jul-18" = "2018/07/01", "Jul-19" = "2019/07/01", "Jun-14" = "2014/06/01", "Jun-20" = "2020/06/01", "Mar-15" = "2015/03/01", "Mar-16" = "2016/03/01", "Mar-17" = "2017/03/01", "Mar-18" = "2018/03/01", "Mar-19" = "2019/03/01", "Mar-20" = "2020/03/01", "Mar-21" = "2021/03/01", "Nov-21" = "2021/11/01", "Dec-22" = "2022/12/01", "May-23" = "2023/05/27", "Dec-23" = "2023/12/12", "Mar-24" = "2024/03/07")
+```
+
+Turn Date into Date format
+(Year-month-day)
+```{r}
+mussels$Date <- as.Date(mussels$Date, "%Y/%m/%d")
+```
+
+
+Create a Year column
+```{r}
+mussels$Year <- year(mussels$Date)
+```
+
+Add a column for WholePlot (just number, no plot letter, called Location in the paper) + convert WholePlot to numeric
+```{r}
+mussels[,"WholePlot"] <- NA 
+mussels$WholePlot <- str_sub(mussels$Plot, 1, nchar(mussels$Plot)-1) #gets rid of last character, which should be the letter
+mussels$WholePlot <- as.numeric(mussels$WholePlot) #was in character, make it numeric
+```
+
+Convert Site, Plot, and WholePlot into Factors
+```{r}
+mussels$Site <- as.factor(mussels$Site)
+mussels$Plot <- as.factor(mussels$Plot)
+mussels$WholePlot <- as.factor(mussels$WholePlot)
+```
+
+Making Date into a continuous variable in a new column (Date.num) and subtracting the start date (June 1st 2014) because otherwise R starts counting from January 1st 1970 (<https://stackoverflow.com/questions/44931645/convert-date-to-continuous-variable-in-r>)
+```{r}
+mussels <- mussels %>% mutate(Date.num = as.numeric(Date - as.Date("2014-06-01"))) 
+plot(mussels$Date, mussels$Date.num) #plotting to make sure it worked
+```
+
+
+#### Data Decisions
+
+Since a lot of the time, the top of the B plot overlapped with the bottom of the A plot, we are taking the average of the A and B plots for our Percent Cover measurements, so from now on we use WholePlot for PCover data.
+
+```{r}
+mussels_wholeplot <- mussels %>% group_by(Date, Site, WholePlot, Date.num, Year) %>% summarize(PCover = mean(PCover))
+```
+
+
+Due to the plot overlap, we decided to use data from only B plots for Bed Height measurements, so making a column that just has the plot letter and making a df with just the B plots. But also Plots 4 and 8 don't have B plots, so 4A and 8A need to be included in this new df as well.
+
+```{r}
+#subsets out the last character in the "Plot" string, which should always be the plot letter (A or B) and stores it in new column
+mussels$Letter <-  str_sub(mussels$Plot, -1)
+
+mussels_B <- mussels %>% filter((Letter %in% "B") | (WholePlot == 4) | (WholePlot == 8))
+```
+
+
+## Raw Data Figures
+
+```{r}
+group.colors <- c(West = "#ff6361", East = "#619eff")
+```
+
+###### Fig S1A - Mussel Cover Raw Data
+
+```{r}
+FigS1A <- mussels_wholeplot %>% 
+  ggplot(mapping=aes(x = Date, y = PCover, color = Site)) + 
+      labs (x = "Date", y = "Mussel Percent Cover") + 
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36),
+          legend.position = "none") + 
+      geom_point(size=4,alpha = 0.7) + 
+      scale_x_date(limits = as.Date(c("2014-06-01", "2024-04-01"))) +
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors)
+
+FigS1A
+
+#ggsave("figS1A.png", height=3, width=3,scale = 3)
+```
+
+
+######Fig S1B - Mussel Bed Height Raw Data
+
+```{r}
+FigS1B <- mussels_B %>% 
+  ggplot(mapping=aes(x = Date, y = Avg.Height, color = Site)) + 
+      labs (x = "Date", y = "Average Mussel Bed Height (cm)") + 
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36),
+          legend.position = "none") + 
+      geom_point (size = 4, alpha = 0.7) + 
+    scale_x_date(limits = as.Date(c("2014-06-01", "2024-04-01"))) +
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors)
+
+FigS1B
+
+#ggsave("figS1B.png", height=3, width=3,scale = 3)
+```

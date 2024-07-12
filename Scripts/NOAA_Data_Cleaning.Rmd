@@ -1,0 +1,82 @@
+---
+title: "NOAA_Data_Cleaning"
+author: "Micaela Chapuis"
+date: "2024-07-09"
+output: html_document
+---
+
+```{r}
+library("dplyr")
+library("lubridate")                                 
+library("readr")
+```
+
+
+Import all NOAA CSV files and join them into one data set
+```{r}
+noaa_data <- list.files(path = "Data/NOAA_Buoy_46240/Raw NOAA Data/csv files",  # Identify all CSV files in the folder 
+  pattern = "*.csv", full.names = TRUE) %>% 
+  lapply(read_csv) %>%                              # Store all files in list
+  bind_rows                                         # Combine data sets into one data set 
+
+noaa_data                                            # Print data to RStudio console
+```
+
+
+Filter out the first row that includes the units for each column
+```{r}
+noaa_data <- noaa_data %>% filter(!(noaa_data$MM %in% "mo"))
+```
+
+
+Rename the year, month, and day columns (ignoring times)
+```{r}
+names(noaa_data)[1] <- "Year"
+names(noaa_data)[2] <- "Month"
+names(noaa_data)[3] <- "Day"
+```
+
+
+Every single entry is a number
+So take all the entries and if they are characters make them numeric
+```{r}
+noaa_data <- noaa_data %>% mutate_if(is.character,as.numeric)
+```
+
+
+This dataset uses "99" or "999" as a replacement for NA --> change back to NA (only doing it on the columns I'm using for now, others still have the 999)
+```{r}
+noaa_data$WVHT <- na_if(noaa_data$WVHT, 99)
+noaa_data$WVHT <- na_if(noaa_data$WVHT, 999) 
+noaa_data$WTMP <- na_if(noaa_data$WTMP, 99)
+noaa_data$WTMP <- na_if(noaa_data$WTMP, 999)  
+```
+
+
+Individual components of date are spread across multiple columns, fix by combining it into one column called Date: 
+```{r}
+noaa_data_dt <- noaa_data %>% select(Year, Month, Day, WVHT, ATMP, WTMP) %>% mutate(Date = make_date(Year, Month, Day))
+```
+
+
+Take the daily average for wave height and water temp
+```{r}
+daily_waveheight <- noaa_data_dt %>% subset(!(is.na(WVHT))) %>%
+  group_by(Date) %>%
+  summarize(WVHT= mean(WVHT))
+daily_watertemp <- noaa_data_dt %>% subset(!(is.na(WTMP))) %>% 
+  group_by(Date) %>%
+  summarize(WTMP= mean(WTMP))
+```
+
+
+Join them
+```{r}
+daily_wavedata <- full_join(daily_waveheight, daily_watertemp, by = "Date")
+```
+
+
+Save new dataframe as csv file
+```{r}
+write.csv(daily_wavedata, file = "daily_wavedata.csv", row.names = FALSE)
+```
