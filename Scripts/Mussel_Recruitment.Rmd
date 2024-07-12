@@ -9,6 +9,7 @@ output: html_document
 library("dplyr")
 library("lubridate")
 library("ggplot2")
+library("broom") # for tidy tables
 ```
 
 Load in Recruitment data
@@ -76,13 +77,19 @@ Fig4 <- recruitment %>% group_by(Year) %>%
 Fig4
 #ggsave("Fig4.png", height=2, width=3,scale = 3)
 ```
-#### Recruitment ANOVA
 
+#### Recruitment ANOVA
+Filtering out NAs bc I don't know why those lines were added in the first place if those tuffies weren't counted
+Also log transforming because some tuffies are on totally different scales (1 vs 1700). Have to add a constant (+1) because there are some 0s and log 0 is -Inf
 ```{r}
 recruit_log <- recruitment %>% filter(!is.na(Num.Recruits)) %>% mutate(logRecruit = log(Num.Recruits+1))
 ```
 
-https://broom.tidymodels.org/reference/tidy.anova.html
+
+
+Following: https://ourcodingclub.github.io/tutorials/anova/
+
+For supplementary tidy table: https://broom.tidymodels.org/reference/tidy.anova.html
 ```{r}
 recruit_anova <- aov(logRecruit ~ Year, data = recruit_log)
 summary(recruit_anova)
@@ -94,17 +101,19 @@ tidy(recruit_anova)
 par(mfrow = c(1,2)) # puts two plots side by side in the same window
 hist(recruit_anova$residuals) # residuals histogram
 plot(recruit_anova, which = 2) # Q-Q plot
+
+# Histogram of residuals should follow a normal (gaussian) distribution, and the points in the Q-Q plot should lie mostly on the straight line
 ```
 
 
 ```{r}
-#checking homoskedasticity (homogeneity of variances) w/ residuals vs fitted plot
+#checking homoskedasticity (homogeneity of variances) w/ residuals vs fitted values plot
 plot(recruit_anova, which = 1)
 # We want to see a straight red line centered around zero! This means residuals do NOT systematically differ across different groups. --> looks pretty good
 ```
 
 #### Recruitment lm
-
+Because ANOVA is a linear model, we can run the same code but using the lm function to get some more details
 ```{r}
 recruit_lm <- lm(logRecruit ~ Year, data = recruit_log)
 summary(recruit_lm)
@@ -112,10 +121,14 @@ summary(recruit_lm)
 
 
 #### TukeyHSD
-
+To assess the significance of differences between pairs of years
 ```{r}
 recruit_tukey <- TukeyHSD(recruit_anova, conf.level = .95)
 recruit_tukey
 plot(recruit_tukey)
 tidy(recruit_tukey)
+
+
+# 2014 and 2015 are not significantly different from each other
+# 2019 is significantly different from both 2014 and 2015
 ```
