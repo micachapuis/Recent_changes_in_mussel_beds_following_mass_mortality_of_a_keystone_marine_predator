@@ -1,5 +1,5 @@
 ---
-title: "NOAA_Data_Cleaning"
+title: "NOAA_Wave_Data_Cleaning"
 author: "Micaela Chapuis"
 date: "2024-07-09"
 output: html_document
@@ -80,3 +80,63 @@ Save new dataframe as csv file
 ```{r}
 write.csv(daily_wavedata, file = "daily_wavedata.csv", row.names = FALSE)
 ```
+
+## Using Data
+```{r}
+daily_wavedata$Date <- as.Date(daily_wavedata$Date)
+daily_wavedata$Year <- year(daily_wavedata$Date)
+```
+
+Rename WVHT and WTMP
+```{r}
+daily_wavedata <- daily_wavedata %>% rename("Wave.Height" = "WVHT",
+                                            "Water.Temp" = "WTMP")
+```
+
+Plot WVHT and WTMP over time
+```{r}
+plot(daily_wavedata$Date, daily_wavedata$Wave.Height)
+
+plot(daily_wavedata$Date, daily_wavedata$Water.Temp)
+```
+### Raw Data Figures
+
+##### Fig S1E - Wave Height Raw Data
+Daily Average Wave Height over Time
+```{r}
+FigS1E <- daily_wavedata %>% 
+  subset(Year > 2013) %>%
+  ggplot(mapping=aes(x = Date, y = Wave.Height)) + 
+      labs (x = "Date", y = "Wave Height (m)") +  
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36)) + 
+      geom_point (size=3,alpha = 0.7)+ 
+      theme(plot.title = element_text(hjust = 0.5, size=35, face="bold"))
+
+FigS1E
+#ggsave("figS1E.png", height=3, width=3,scale = 3)
+```
+##### Fig S1F - Water Temperature Raw Data
+Daily Average Water Temperature over Time
+
+```{r}
+FigS1F <- daily_wavedata %>% 
+  subset(Year > 2013) %>%
+  ggplot(mapping=aes(x = Date, y = Water.Temp)) + 
+      labs (x = "Date", y = "Water Temperature (°C)") + 
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36)) + 
+      geom_point (size=3, alpha = 0.7) + 
+      scale_y_continuous(breaks = c(10, 13, 16, 19)) +
+      theme(plot.title = element_text(hjust = 0.5, size=30, face="bold"))
+
+FigS1F
+#ggsave("figS1F.png", height=3, width=3,scale = 3)
+```
+

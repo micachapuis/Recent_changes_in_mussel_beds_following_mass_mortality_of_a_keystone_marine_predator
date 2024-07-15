@@ -12,6 +12,8 @@ library("ggplot2")
 library("broom") # for tidy tables
 ```
 
+## Mussel Recruitment
+
 Load in Recruitment data
 ```{r}
 recruitment <- read.csv("Data/mussel_recruitment_data.csv")

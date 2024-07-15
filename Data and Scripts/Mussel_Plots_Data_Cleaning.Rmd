@@ -124,8 +124,8 @@ mussels_B <- mussels %>% filter((Letter %in% "B") | (WholePlot == 4) | (WholePlo
 group.colors <- c(West = "#ff6361", East = "#619eff")
 ```
 
-###### Fig S1A - Mussel Cover Raw Data
 
+###### Fig S1A - Mussel Cover Raw Data
 ```{r}
 FigS1A <- mussels_wholeplot %>% 
   ggplot(mapping=aes(x = Date, y = PCover, color = Site)) + 
