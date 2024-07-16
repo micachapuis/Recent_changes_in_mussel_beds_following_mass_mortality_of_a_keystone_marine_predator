@@ -1,5 +1,5 @@
 ---
-title: "NOAA_Wave_Data_Cleaning"
+title: "NOAA_Wave_Data"
 author: "Micaela Chapuis"
 date: "2024-07-09"
 output: html_document
@@ -140,3 +140,4 @@ FigS1F
 #ggsave("figS1F.png", height=3, width=3,scale = 3)
 ```
 
+Wave Data needs to be put together with mussel data because it needs to be averaged based on each date of mussel data collection, so Figure 2 (model data) panels are created in a different script.
