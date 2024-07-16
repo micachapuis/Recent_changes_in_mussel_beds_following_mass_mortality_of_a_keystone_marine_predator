@@ -11,7 +11,7 @@ library("lubridate")
 library("readr")
 ```
 
-
+## Making Dataset
 Import all NOAA CSV files and join them into one data set
 ```{r}
 noaa_data <- list.files(path = "Data/NOAA_Buoy_46240/Raw NOAA Data/csv files",  # Identify all CSV files in the folder 
@@ -140,4 +140,108 @@ FigS1F
 #ggsave("figS1F.png", height=3, width=3,scale = 3)
 ```
 
-Wave Data needs to be put together with mussel data because it needs to be averaged based on each date of mussel data collection, so Figure 2 (model data) panels are created in a different script.
+## Models
+
+Importing the csv made in the Models script, where the wave data was averaged for each of the 3 months preceding each mussel data collection date
+```{r}
+waves_avg <- read.csv("Data/Data for Models/mussels.abiotic.csv")
+```
+
+Turn Date into Date format
+(Year-month-day)
+```{r}
+waves_avg$Date <- as.Date(waves_avg$Date)
+```
+
+
+```{r}
+waves_avg <- waves_avg %>% mutate(date_dec = decimal_date(Date))
+```
+
+#### Wave Height
+```{r}
+# THIS IS THE MODEL WE'RE USING
+wht.m1 <- lm(Wave.Height ~ date_dec, data = waves_avg)
+summary(wht.m1)
+acf(residuals(wht.m1)) 
+tidy(wht.m1)
+```
+```{r}
+whtgam1 <- gam(Wave.Height ~ date_dec, data = waves_avg, method = "ML")
+whtgam1_summary <- summary(whtgam1)
+whtgam1_summary$p.table
+whtgam1_summary$s.table
+par(mfrow = c(1, 2))
+plot(whtgam1, all.terms = TRUE)
+acf(residuals(whtgam1)) 
+```
+
+```{r}
+AIC(wht.m1, whtgam1) # lower AIC = better performing model --> equal
+#so we're keeping the linear model
+```
+##### Plot with Model Data
+######Fig2E - Wave Height Model Data
+```{r}
+Fig2E <- waves_avg %>% 
+  ggplot(aes(date_dec, Wave.Height)) + 
+  geom_smooth(method = "lm", fill = "gray79", color = "gray25") + 
+  geom_point(size = 5, alpha = 0.7, pch = 21, fill = "black") +
+  theme_minimal() +
+  theme(panel.background = element_blank(), 
+        axis.line = element_line (colour = "black"),
+        axis.text.y = element_text(size =25),
+        axis.text.x = element_text(angle = 0, hjust = 0.5, size = 25),
+        axis.text = element_text(size = 25),
+        axis.title = element_text(size = 25)) + 
+  labs(x = "Date", y = "Wave Height (m)") 
+
+Fig2E
+#ggsave("Fig2E.png", height=3, width=3, scale=3)
+```
+
+
+#### Water Temperature
+
+```{r}
+# THIS IS THE MODEL WE'RE USING
+wtmp.m1 <- lm(Water.Temp ~ date_dec, data = waves_avg)
+summary(wtmp.m1)
+acf(residuals(wtmp.m1)) 
+tidy(wtmp.m1)
+```
+
+```{r}
+wtmpgam1 <- gam(Water.Temp ~ date_dec, data = waves_avg, method = "ML")
+wtmpgam1_summary <- summary(wtmpgam1)
+wtmpgam1_summary$p.table
+wtmpgam1_summary$s.table
+par(mfrow = c(1, 2))
+plot(wtmpgam1, all.terms = TRUE)
+acf(residuals(wtmpgam1)) 
+```
+
+```{r}
+AIC(wtmp.m1, wtmpgam1) # lower AIC = better performing model --> equal
+# so we're using the linear model
+```
+##### Plot with Model Data
+###### Fig 2F - Water Temperature Model Data
+```{r}
+Fig2F <- waves_avg %>% 
+  ggplot(aes(date_dec, Water.Temp)) + 
+  geom_smooth(method = "lm", fill = "gray79", color = "gray25") + 
+  geom_point(size = 5, alpha = 0.7, pch = 21, fill = "black") +
+  theme_minimal() +
+  theme(panel.background = element_blank(), 
+        axis.line = element_line (colour = "black"), 
+        axis.text.x = element_text(angle = 0, hjust = 0.5),
+        axis.text = element_text(size = 25),
+        axis.title = element_text(size = 25)) + 
+  labs(x = "Date", y = "Water Temperature (°C)") 
+
+Fig2F
+#ggsave("Fig2F.png", height=3, width=3, scale=3)
+```
+
+

@@ -1,0 +1,274 @@
+---
+title: "Models"
+author: "Micaela Chapuis"
+date: "2024-07-16"
+output: html_document
+---
+
+```{r}
+library("dplyr")
+library("lubridate")
+library("ggplot2")
+```
+
+```{r}
+mussel_cover_yearly_avg <- read.csv("Data/Data for Models/mussel_cover_yearly_avg.csv")
+mussel_height_yearly_avg <- read.csv("Data/Data for Models/mussel_height_yearly_avg.csv")
+
+mussels <- read.csv("Data/Data for Models/mussels.csv")
+mussels_B <- read.csv("Data/Data for Models/mussels_B.csv")
+
+seastars_avg <- read.csv("Data/Data for Models/seastars_avg.csv")
+whelks_avg <- read.csv("Data/Data for Models/whelks_avg.csv")
+
+daily_wavedata <- read.csv("Data/daily_wavedata.csv")
+```
+
+
+
+## Biotic Factors
+### Mussel Cover + Predators
+
+Joining the data sets
+```{r}
+mussel_cover_predators <- left_join(mussel_cover_yearly_avg, seastars_avg, by=c("Year", "Site"))
+mussel_cover_predators <- left_join(mussel_cover_predators, whelks_avg, by=c("Year", "Site"))
+```
+
+Centering and standardizing predictors. This function will standardize the data by default unless indicated with "scale = FALSE"
+```{r}
+mussel_cover_predators$whelks.z <- as.numeric(scale(mussel_cover_predators$Num.Whelks))
+mussel_cover_predators$seastars.z <- as.numeric(scale(mussel_cover_predators$Num.Seastars))
+mussel_cover_predators$year.z <- as.numeric(scale(mussel_cover_predators$Year))
+```
+
+###### Model
+```{r}
+cover.pred.model <- lm(PCover ~ year.z +Site + whelks.z + seastars.z, data = mussel_cover_predators)
+
+summary(cover.pred.model)
+tidy(cover.pred.model)
+```
+
+```{r}
+plot(cover.pred.model)
+qqnorm(resid(cover.pred.model))
+qqline(resid(cover.pred.model))
+hist(resid(cover.pred.model))
+
+sjPlot::plot_model(cover.pred.model, type="diag")
+
+tidy(cover.pred.model)
+```
+
+
+### Mussel Height + Predators
+
+```{r}
+mussel_height_predators <- left_join(mussel_height_yearly_avg, seastars_avg, by=c("Year", "Site"))
+mussel_height_predators <- left_join(mussel_height_predators, whelks_avg, by=c("Year", "Site"))
+```
+
+Centering and standardizing predictors. This function will standardize the data by default unless indicated with "scale = FALSE"
+```{r}
+mussel_height_predators$whelks.z <- as.numeric(scale(mussel_height_predators$Num.Whelks))
+mussel_height_predators$seastars.z <- as.numeric(scale(mussel_height_predators$Num.Seastars))
+mussel_height_predators$year.z <- as.numeric(scale(mussel_height_predators$Year))
+```
+
+###### Model
+```{r}
+height.pred.model <- lm(Avg.Height ~ year.z + whelks.z + seastars.z, data = mussel_height_predators)
+
+summary(height.pred.model)
+tidy(height.pred.model)
+```
+
+
+```{r}
+plot(height.pred.model) 
+qqnorm(resid(height.pred.model))
+qqline(resid(height.pred.model))
+hist(resid(height.pred.model))
+
+sjPlot::plot_model(height.pred.model, type="diag")
+
+```
+
+
+## Abiotic Factors
+```{r}
+daily_wavedata$Date <- as.Date(daily_wavedata$Date)
+daily_wavedata$Year <- year(daily_wavedata$Date)
+```
+
+Rename WVHT and WTMP
+```{r}
+daily_wavedata <- daily_wavedata %>% rename("Wave.Height" = "WVHT",
+                                            "Water.Temp" = "WTMP")
+```
+
+
+Written with ChatGPT: Function to calculate average of any variable (here WVHT and WTMP) for a given interval (here we want to take the date of mussel data collection and calculate the average of the variable for the 3 months before that day)
+
+```{r}
+# Function to calculate average of any variable (here WVHT and WTMP) for a given interval (here we want to take the date of mussel data collection and calculate the average of the variable for the 3 months before that day)
+
+calculate_average_variable <- function(end_date, data, variable) {
+  
+  # Convert the end date to date format
+  end_date <- as.Date(end_date)
+  
+  # Find the start date of the interval by subtracting 3 months from the end date
+  start_date <- as.Date(end_date - months(3))
+  
+  # Create sequence of dates between start and end dates
+  date_sequence <- seq(from = start_date, to = end_date, by = "days")
+  
+  # Subset data to only include rows for dates in the interval
+  data_subset <- data[data$Date %in% date_sequence,]
+  
+  # Calculate average of the variable for the interval
+  average_variable <- mean(data_subset[[variable]])
+  
+  # Return the average of the variable
+  return(average_variable)
+}
+```
+
+
+#### Mussel Cover
+
+Make new df "mussels.abiotic" with the same data as mussels + will add wave data
+
+```{r}
+mussels.abiotic <- mussels
+```
+
+Loop through mussel data (mussels) and calculate average Wave.Height for each date + add it to mussels.abiotic
+
+```{r}
+for (i in 1:nrow(mussels)) {
+  # Get end date from mussels
+  end_date <- mussels[i, "Date"]
+  # Calculate average wave height for interval
+  average_waveheight <- calculate_average_variable(end_date, daily_wavedata, "Wave.Height")
+  # Store result in mussels
+  mussels.abiotic[i, "Wave.Height"] <- average_waveheight
+}
+```
+
+Repeat with Water.Temp
+
+```{r}
+for (i in 1:nrow(mussels)) {
+  # Get end date from mussels
+  end_date <- mussels[i, "Date"]
+  # Calculate average water temperature for interval
+  average_watertemp <- calculate_average_variable(end_date, daily_wavedata, "Water.Temp")
+  # Store result in mussels
+  mussels.abiotic[i, "Water.Temp"] <- average_watertemp
+}
+```
+
+```{r}
+mussels.abiotic <- mussels.abiotic %>% group_by(Date, Date.num, Wave.Height, Water.Temp) %>% summarize(PCover = mean(PCover))
+```
+
+Making csv with the averaged wave data to make Figure 2 with the model data
+```{r}
+#write.csv(mussels.abiotic, file = "mussels.abiotic.csv", row.names = FALSE)  #to use in NOAA_Wave_Data script
+```
+
+
+Centering and standardizing predictors. This function will standardize the data by default unless indicated with "scale = FALSE"
+```{r}
+mussels.abiotic$wvht.z <- as.numeric(scale(mussels.abiotic$Wave.Height))
+mussels.abiotic$wtmp.z <- as.numeric(scale(mussels.abiotic$Water.Temp))
+mussels.abiotic$date.z <- as.numeric(scale(mussels.abiotic$Date.num))
+```
+
+
+###### Model
+```{r}
+cover.abiotic.model <- lm(PCover ~ date.z + wvht.z + wtmp.z, data = mussels.abiotic)
+
+summary(cover.abiotic.model)
+tidy(cover.abiotic.model)
+```
+
+
+```{r}
+plot(cover.abiotic.model)
+qqnorm(resid(cover.abiotic.model))
+qqline(resid(cover.abiotic.model))
+hist(resid(cover.abiotic.model))
+
+sjPlot::plot_model(cover.abiotic.model, type="diag")
+```
+
+#### Mussel Bed Height
+
+Make new df "mussels.abiotic.B" with the same data as mussels_B + will add wave data
+
+```{r}
+mussels.abiotic.B <- mussels_B
+```
+
+Loop through mussel data (mussels) and calculate average Wave.Height for each date + add it to mussels.abiotic
+
+```{r}
+for (i in 1:nrow(mussels_B)) {
+  # Get end date from mussels_B
+  end_date <- mussels_B[i, "Date"]
+  # Calculate average wave height for interval
+  average_waveheight <- calculate_average_variable(end_date, daily_wavedata, "Wave.Height")
+  # Store result in mussels
+  mussels.abiotic.B[i, "Wave.Height"] <- average_waveheight
+}
+```
+
+Repeat with Water.Temp
+
+```{r}
+for (i in 1:nrow(mussels_B)) {
+  # Get end date from mussels
+  end_date <- mussels_B[i, "Date"]
+  # Calculate average water temperature for interval
+  average_watertemp <- calculate_average_variable(end_date, daily_wavedata, "Water.Temp")
+  # Store result in mussels
+  mussels.abiotic.B[i, "Water.Temp"] <- average_watertemp
+}
+```
+
+```{r}
+mussels.abiotic.B <- mussels.abiotic.B %>% group_by(Date, Date.num, Wave.Height, Water.Temp) %>% summarize(Avg.Height = mean(Avg.Height))
+```
+
+Centering and standardizing predictors. This function will standardize the data by default unless indicated with "scale = FALSE"
+```{r}
+mussels.abiotic.B$wvht.z <- as.numeric(scale(mussels.abiotic.B$Wave.Height))
+mussels.abiotic.B$wtmp.z <- as.numeric(scale(mussels.abiotic.B$Water.Temp))
+mussels.abiotic.B$date.z <- as.numeric(scale(mussels.abiotic.B$Date.num))
+```
+
+###### Model
+```{r}
+height.abiotic.model <- lm(Avg.Height ~ date.z + wvht.z + wtmp.z, data = mussels.abiotic.B)
+
+summary(height.abiotic.model)
+tidy(height.abiotic.model)
+```
+
+
+```{r}
+plot(height.abiotic.model)
+qqnorm(resid(height.abiotic.model))
+qqline(resid(height.abiotic.model))
+hist(resid(height.abiotic.model))
+
+sjPlot::plot_model(height.abiotic.model, type="diag")
+```
+
+
+

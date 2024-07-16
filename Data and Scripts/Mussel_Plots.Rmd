@@ -44,6 +44,8 @@ mussels$Avg.Height <- rowMeans(mussels[ , c(6:14)])
 
 Get rid of extra columns
 ```{r}
+# since I already calculated the Avg.Height for each plot, I'm getting rid of the columns with the 9 measurements per plot because
+# we won't use them
 extra.columns <- names(mussels) %in% c("M1..0", "M2..10", "M3..20", "M4..30", "M5..40", "M6..50", "M7..60", "M8..70", "M9..80", "Notes", "Analyzed.By.")
 
 mussels <- mussels[,!extra.columns]
@@ -115,6 +117,7 @@ Due to the plot overlap, we decided to use data from only B plots for Bed Height
 #subsets out the last character in the "Plot" string, which should always be the plot letter (A or B) and stores it in new column
 mussels$Letter <-  str_sub(mussels$Plot, -1)
 
+# only keeping the B plots and plots 4A and 8A
 mussels_B <- mussels %>% filter((Letter %in% "B") | (WholePlot == 4) | (WholePlot == 8))
 ```
 
@@ -207,6 +210,7 @@ gam.check(cover.gam1) # residuals exhibit curvilinear trend
 fitted(cover.gam1)
 acf(residuals(cover.gam1)) 
 ```
+
 ```{r}
 ## Wiggly
 cover.gam2 <- gam(PCover ~ s(date_dec), data = mussel_cover_avg_sub) #the s() function makes it a smoothed (non-linear) term
@@ -507,4 +511,22 @@ Fig2B
 #ggsave("Fig2B.png", height=3, width=3, scale=3)
 
 ```
+
+
+
+## Creating new csv files
+For predator models
+```{r}
+mussel_cover_yearly_avg <- mussels %>% group_by(Year, Site) %>% summarize(PCover = mean(PCover))
+mussel_height_yearly_avg <- mussels_B %>% group_by(Year, Site) %>% summarize(Avg.Height = mean(Avg.Height))
+#write.csv(mussel_cover_yearly_avg, file = "mussel_cover_yearly_avg.csv", row.names = FALSE)  #to use in models script
+#write.csv(mussel_height_yearly_avg, file = "mussel_height_yearly_avg.csv", row.names= FALSE) #to use in models script
+```
+
+For abiotic models
+```{r}
+#write.csv(mussels, file = "mussels.csv", row.names = FALSE)  #to use in models script
+#write.csv(mussels_B, file = "mussels_B.csv", row.names = FALSE)  #to use in models script
+```
+
 

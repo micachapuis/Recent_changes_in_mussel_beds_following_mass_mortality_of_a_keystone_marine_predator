@@ -148,7 +148,10 @@ FigS1C
 
 ```{r}
 sd <- seastars %>% filter(Year > 2013)
+#write.csv(sd, file = "seastars_avg.csv", row.names = FALSE)  #to be used in the models script
 ```
+
+Most of the code from here on (within this section) was written by Robin Elahi
 
 Following this: https://rpubs.com/markpayne/164550
 ```{r}
@@ -223,6 +226,8 @@ Fig2C
 lt_stars <- seastars %>% group_by(Year,Site) %>% summarize(Num.Seastars = mean(Num.Seastars))
 ```
 
+Most of the code from here on (within this section) was written by Robin Elahi
+
 Following this: https://rpubs.com/markpayne/164550
 ```{r}
 #linear model with year site interaction
@@ -295,8 +300,11 @@ Fig3
 Averaging Whelks to Site and Year to match Seastars
 ```{r}
 wd <- whelks %>% group_by(Site, Year) %>% summarize(Num.Whelks = mean(Num.Whelks))
+#write.csv(wd, file = "whelks_avg.csv", row.names = FALSE)  #to use in models script
 ```
 
+
+Most of the code from here on was written by Robin Elahi
 Following this: https://rpubs.com/markpayne/164550
 ```{r}
 #with Year*Site interaction
