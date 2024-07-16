@@ -1,0 +1,510 @@
+---
+title: "Mussels Plots Data Cleaning + Raw Figs"
+author: "Micaela Chapuis"
+date: "2024-07-10"
+output: html_document
+---
+
+```{r}
+library("dplyr")
+library("lubridate")
+library("stringr")
+library("ggplot2")
+library("mgcv")
+```
+
+
+### Mussel Plots Data
+
+#### Data Cleaning
+
+Load in Mussel Data
+
+```{r}
+mussels <- read.csv("Data/mussel_data.csv")
+```
+
+When extracting the bed height data from pictures, if there wasn't a clump of 20 or more mussels at the 10 cm intervals where we took the measurements, then it was marked as NA. But then a lot of data (especially early data) would be excluded from figures and models.
+
+If we didn't have the overlap between A and B plots, we would add up the height of the entire B plot (60 cm) plus the height measurement until a mussel clump in the A plot. But because of the plot overlap (and because it is always different), we decided that the most consistent way of dealing with this is to change the NAs to 60 cm, which is the height of the quadrat. (This makes the data censored because the actual limit of the beds could be outside of the quadrat, that will be dealt with later on)
+
+We have to do it this early on in the script because we should do it for each of the 9 bed height measurements for each quadrat. Once we replace all the NAs, we should calculate the Avg. Height for each plot (each row) again.
+
+```{r}
+# goes through the columns with the measurements every 10cm and if there is an NA it will be replaced with the value 60
+cols <- c("M1..0", "M2..10", "M3..20", "M4..30", "M5..40", "M6..50", "M7..60", "M8..70", "M9..80")
+mussels <- mussels %>% mutate(across(cols, ~ replace(., is.na(.), 60)))
+```
+
+
+```{r}
+#take the new average of the values in the individual measurement columns (columns 6 through 14) and store them in Avg.Height
+mussels$Avg.Height <- rowMeans(mussels[ , c(6:14)])
+```
+
+Get rid of extra columns
+```{r}
+extra.columns <- names(mussels) %in% c("M1..0", "M2..10", "M3..20", "M4..30", "M5..40", "M6..50", "M7..60", "M8..70", "M9..80", "Notes", "Analyzed.By.")
+
+mussels <- mussels[,!extra.columns]
+```
+
+Changing column names
+```{r}
+# Change name of 4th and 5th columns of mussels
+names(mussels)[4] <- "Area"
+names(mussels)[5] <- "PCover"
+```
+
+Make Avg.Height column into an integer
+```{r}
+mussels$Avg.Height <- as.numeric(mussels$Avg.Height)
+```
+
+Dates are weird from the spreadsheet,
+Recode dates from Mon-Yr to yr/mm
+```{r}
+mussels$Date <- dplyr::recode(mussels$Date, "Aug-14" = "2014/08/01", "Aug-16" = "2016/08/01", "Aug-17" = "2017/08/01", "Aug-18" = "2018/08/01", "Dec-14" = "2014/12/01", "Dec-15" = "2015/12/01", "Dec-16" = "2016/12/01", "Dec-17" = "2017/12/01", "Dec-18" = "2018/12/01", "Dec-19" = "2019/12/01", "Jul-14" = "2014/07/01", "Jul-15" = "2015/07/01", "Jul-18" = "2018/07/01", "Jul-19" = "2019/07/01", "Jun-14" = "2014/06/01", "Jun-20" = "2020/06/01", "Mar-15" = "2015/03/01", "Mar-16" = "2016/03/01", "Mar-17" = "2017/03/01", "Mar-18" = "2018/03/01", "Mar-19" = "2019/03/01", "Mar-20" = "2020/03/01", "Mar-21" = "2021/03/01", "Nov-21" = "2021/11/01", "Dec-22" = "2022/12/01", "May-23" = "2023/05/27", "Dec-23" = "2023/12/12", "Mar-24" = "2024/03/07")
+```
+
+Turn Date into Date format
+(Year-month-day)
+```{r}
+mussels$Date <- as.Date(mussels$Date, "%Y/%m/%d")
+```
+
+
+Create a Year column
+```{r}
+mussels$Year <- year(mussels$Date)
+```
+
+Add a column for WholePlot (just number, no plot letter, called Location in the paper) + convert WholePlot to numeric
+```{r}
+mussels[,"WholePlot"] <- NA 
+mussels$WholePlot <- str_sub(mussels$Plot, 1, nchar(mussels$Plot)-1) #gets rid of last character, which should be the letter
+mussels$WholePlot <- as.numeric(mussels$WholePlot) #was in character, make it numeric
+```
+
+Convert Site, Plot, and WholePlot into Factors
+```{r}
+mussels$Site <- as.factor(mussels$Site)
+mussels$Plot <- as.factor(mussels$Plot)
+mussels$WholePlot <- as.factor(mussels$WholePlot)
+```
+
+Making Date into a continuous variable in a new column (Date.num) and subtracting the start date (June 1st 2014) because otherwise R starts counting from January 1st 1970 (<https://stackoverflow.com/questions/44931645/convert-date-to-continuous-variable-in-r>)
+```{r}
+mussels <- mussels %>% mutate(Date.num = as.numeric(Date - as.Date("2014-06-01"))) 
+plot(mussels$Date, mussels$Date.num) #plotting to make sure it worked
+```
+
+
+#### Data Decisions
+
+Since a lot of the time, the top of the B plot overlapped with the bottom of the A plot, we are taking the average of the A and B plots for our Percent Cover measurements, so from now on we use WholePlot for PCover data.
+
+```{r}
+mussels_wholeplot <- mussels %>% group_by(Date, Site, WholePlot, Date.num, Year) %>% summarize(PCover = mean(PCover))
+```
+
+
+Due to the plot overlap, we decided to use data from only B plots for Bed Height measurements, so making a column that just has the plot letter and making a df with just the B plots. But also Plots 4 and 8 don't have B plots, so 4A and 8A need to be included in this new df as well.
+
+```{r}
+#subsets out the last character in the "Plot" string, which should always be the plot letter (A or B) and stores it in new column
+mussels$Letter <-  str_sub(mussels$Plot, -1)
+
+mussels_B <- mussels %>% filter((Letter %in% "B") | (WholePlot == 4) | (WholePlot == 8))
+```
+
+
+## Raw Data Figures
+
+```{r}
+group.colors <- c(West = "#ff6361", East = "#619eff")
+```
+
+
+###### Fig S1A - Mussel Cover Raw Data
+```{r}
+FigS1A <- mussels_wholeplot %>% 
+  ggplot(mapping=aes(x = Date, y = PCover, color = Site)) + 
+      labs (x = "Date", y = "Mussel Percent Cover") + 
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36),
+          legend.position = "none") + 
+      geom_point(size=4,alpha = 0.7) + 
+      scale_x_date(limits = as.Date(c("2014-06-01", "2024-04-01"))) +
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors)
+
+FigS1A
+
+#ggsave("figS1A.png", height=3, width=3,scale = 3)
+```
+
+
+######Fig S1B - Mussel Bed Height Raw Data
+
+```{r}
+FigS1B <- mussels_B %>% 
+  ggplot(mapping=aes(x = Date, y = Avg.Height, color = Site)) + 
+      labs (x = "Date", y = "Average Mussel Bed Height (cm)") + 
+      theme(panel.background = element_blank(), 
+          axis.line = element_line (colour = "black"), 
+          axis.text = element_text(size = 32),
+                axis.text.x = element_text(angle = 0, hjust = 0.5),
+          axis.title = element_text(size = 36),
+          legend.position = "none") + 
+      geom_point (size = 4, alpha = 0.7) + 
+    scale_x_date(limits = as.Date(c("2014-06-01", "2024-04-01"))) +
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors)
+
+FigS1B
+
+#ggsave("figS1B.png", height=3, width=3,scale = 3)
+```
+
+
+### Models
+
+First, we're averaging mussel cover and mussel bed height data by Date and Site to deal with censoring in the bed height data (see paper for details)
+```{r}
+mussel_cover_avg <- mussels %>% group_by(Date, Site) %>% summarize(PCover = mean(PCover))
+mussel_height_avg <- mussels_B %>% group_by(Date, Site) %>% summarize(Avg.Height = mean(Avg.Height))
+```
+
+#### Mussel Cover Model 
+Converting date to decimal date
+```{r}
+mussel_cover_avg <- mussel_cover_avg %>% mutate(date_dec = decimal_date(Date))
+mussel_cover_avg
+```
+
+GAMS
+Reference
+http://r.qcbs.ca/workshop08/book-en/introduction-to-gams.html
+
+Most of the code from here on was written by Robin Elahi
+
+```{r}
+#practice with one subset of the data first
+mussel_cover_avg_sub <- mussel_cover_avg %>% filter(Site == "West")
+```
+
+```{r}
+## Linear
+cover.gam1 <- gam(PCover ~ date_dec, data = mussel_cover_avg_sub)
+summary(cover.gam1)
+
+par(mfrow = c(2, 2))
+gam.check(cover.gam1) # residuals exhibit curvilinear trend
+fitted(cover.gam1)
+acf(residuals(cover.gam1)) 
+```
+```{r}
+## Wiggly
+cover.gam2 <- gam(PCover ~ s(date_dec), data = mussel_cover_avg_sub) #the s() function makes it a smoothed (non-linear) term
+summary(cover.gam2) #R squared increased a lot
+plot(cover.gam2) # "The mgcv package also includes a default plot() function to look at the smooths"
+
+acf(residuals(cover.gam2)) 
+par(mfrow = c(2,2))
+gam.check(cover.gam2)
+k.check(cover.gam2)
+```
+
+```{r}
+## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
+# Here we ask whether adding a smooth function to the linear model improves the fit of the model to our dataset.
+
+AIC(cover.gam1, cover.gam2) # lower AIC = better performing model --> gam2 (with smoothed term) is better
+
+#"Here, the AIC of the smooth GAM is lower, which indicates that adding a smoothing function improves model performance. Linearity is therefore not supported by our data."
+```
+
+```{r} 
+#"when we compare the fit of the linear (red) and non-linear (blue) models, it is clear that the blue one is more appropriate for our dataset"
+mussel_cover_avg_sub %>% 
+  ggplot(aes(date_dec, PCover)) + 
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(y = fitted(cover.gam1)), color = "red") + 
+  geom_line(aes(y = fitted(cover.gam2)), color = "blue")
+```
+
+Now for real with all the data
+```{r}
+mussel_cover_avg <- mussel_cover_avg %>% mutate(Site = as.factor(Site))
+mussel_cover_avg
+```
+
+```{r}
+## Trying with no interaction between date and site
+cover.gam1 <- gam(PCover ~ s(date_dec) + Site, data = mussel_cover_avg, method = "ML")
+gam1_summary <- summary(cover.gam1)
+gam1_summary$p.table
+gam1_summary$s.table
+par(mfrow = c(1, 2))
+plot(cover.gam1, all.terms = TRUE)
+acf(residuals(cover.gam1)) 
+```
+
+
+```{r}
+# USING THIS MODEL (see AIC below)
+## With interaction between date and site
+# https://r.qcbs.ca/workshop08/book-en/gam-with-interaction-terms.html
+
+cover.gam2 <- gam(PCover ~ s(date_dec, by = Site) + Site, data = mussel_cover_avg, method = "ML") # this is default, thin plate regression spline
+gam2_summary <- summary(cover.gam2)
+gam2_summary$p.table
+gam2_summary$s.table
+par(mfrow = c(2, 2))
+plot(cover.gam2, all.terms = TRUE) # the first two plots show the interaction effect of the date smooth and each level of the Site factor variable.
+acf(residuals(cover.gam2)) 
+```
+
+```{r}
+## Check gam
+par(mfrow = c(2, 2))
+gam.check(cover.gam2)
+```
+
+```{r}
+## Compare models
+AIC(cover.gam1, cover.gam2) #gam 1 has no interaction, gam 2 has interaction. This shows that including the interaction between date and site improves the model's performance
+
+#overall, we're keeping GAM over LM, with the smoothed term (date) and with the date*site interaction (cover.gam2)
+```
+
+##### Plot with Model Data
+```{r}
+x_range <- range(mussel_cover_avg$date_dec)
+x_new <- seq(from = x_range[1], to = x_range[2], by = 0.1)
+x_new
+
+site_levels <- unique(mussel_cover_avg$Site)
+```
+
+```{r}
+# Make the prediction dataframe
+cover_pred <- expand.grid(x_new, site_levels) %>% 
+  as_tibble() %>% 
+  rename(date_dec = Var1, Site = Var2)
+head(cover_pred)
+```
+
+```{r}
+# Predictions given the model
+y_pred <- predict(cover.gam2, cover_pred, se.fit = TRUE)
+y_pred
+```
+
+```{r}
+# 95% CI assuming normal distribution
+upr <- y_pred$fit + (2 * y_pred$se.fit) 
+lwr <- y_pred$fit - (2 * y_pred$se.fit)
+
+cover_pred <- cover_pred %>%
+  mutate(PCover = y_pred$fit, 
+         upper = upr, 
+         lower = lwr)
+```
+
+###### Fig2A - Mussel Cover Model Data
+```{r}
+## Final plot with model output
+Fig2A <- mussel_cover_avg %>% 
+  ggplot(aes(date_dec, PCover, color = Site, fill = Site)) + 
+  geom_ribbon(data = cover_pred, aes(ymin = lower, ymax = upper, 
+                                 fill = Site, color = NULL), alpha = 0.5) + 
+  geom_line(data = cover_pred, size =0.75) + 
+  geom_point(size = 5, alpha = 0.7, pch = 21, color = "black") +
+  theme_minimal() + 
+  theme(panel.background = element_blank(), 
+        axis.line = element_line (colour = "black"), 
+        axis.text.y = element_text(size = 25),
+        axis.text.x = element_text(angle = 0, hjust = 0.5, size=25),
+        axis.title.y = element_text(size = 25),
+        axis.title.x = element_text(size = 25),
+        legend.position = "none") +
+  scale_y_continuous(limits = c(10, 100)) + 
+  labs(x = "Date", y = "Mussel Percent Cover") +
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors) 
+
+Fig2A
+#ggsave("Fig2A.png", height=3, width=3, scale=3)
+```
+
+
+#### Mussel Bed Height
+Converting date to decimal date
+```{r}
+mussel_height_avg <- mussel_height_avg %>% mutate(date_dec = decimal_date(Date))
+mussel_height_avg
+```
+
+GAMS
+Reference
+http://r.qcbs.ca/workshop08/book-en/introduction-to-gams.html
+
+Most of the code from here on was written by Robin Elahi
+
+```{r}
+#practice with one subset of the data first
+mussel_height_avg_sub <- mussel_height_avg %>% filter(Site == "West")
+```
+
+```{r}
+## Linear
+height.gam1 <- gam(Avg.Height ~ date_dec, data = mussel_height_avg_sub)
+summary(height.gam1)
+
+par(mfrow = c(2, 2))
+gam.check(height.gam1) # residuals exhibit curvilinear trend
+fitted(height.gam1)
+acf(residuals(height.gam1)) 
+```
+
+
+```{r}
+## Wiggly
+height.gam2 <- gam(Avg.Height ~ s(date_dec), data = mussel_height_avg_sub) #the s() function makes it a smoothed (non-linear) term
+summary(height.gam2) #R squared increased a lot
+plot(height.gam2) # "The mgcv package also includes a default plot() function to look at the smooths"
+
+acf(residuals(height.gam2)) 
+par(mfrow = c(2,2))
+gam.check(height.gam2)
+k.check(height.gam2)
+```
+
+```{r}
+## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
+# Here we ask whether adding a smooth function to the linear model improves the fit of the model to our dataset.
+
+AIC(height.gam1, height.gam2) # lower AIC = better performing model --> gam2 (with smoothed term) is better
+
+#"Here, the AIC of the smooth GAM is lower, which indicates that adding a smoothing function improves model performance. Linearity is therefore not supported by our data."
+```
+
+```{r} 
+#"when we compare the fit of the linear (red) and non-linear (blue) models, it is clear that the blue one is more appropriate for our dataset"
+mussel_height_avg_sub %>% 
+  ggplot(aes(date_dec, Avg.Height)) + 
+  geom_point(size = 3, alpha = 0.5) + 
+  geom_line(aes(y = fitted(height.gam1)), color = "red") + 
+  geom_line(aes(y = fitted(height.gam2)), color = "blue")
+```
+
+Now for real with all the data
+```{r}
+mussel_height_avg <- mussel_height_avg %>% mutate(Site = as.factor(Site))
+mussel_height_avg
+```
+
+```{r}
+## Trying with no interaction between date and site
+height.gam1 <- gam(Avg.Height ~ s(date_dec) + Site, data = mussel_height_avg, method = "ML")
+gam1_summary <- summary(height.gam1)
+gam1_summary$p.table
+gam1_summary$s.table
+par(mfrow = c(1, 2))
+plot(height.gam1, all.terms = TRUE)
+acf(residuals(height.gam1)) 
+```
+
+
+```{r}
+# USING THIS MODEL (see AIC below)
+## With interaction between date and site
+# https://r.qcbs.ca/workshop08/book-en/gam-with-interaction-terms.html
+
+height.gam2 <- gam(Avg.Height ~ s(date_dec, by = Site) + Site, data = mussel_height_avg, method = "ML") # this is default, thin plate regression spline
+gam2_summary <- summary(height.gam2)
+gam2_summary$p.table
+gam2_summary$s.table
+par(mfrow = c(2, 2))
+plot(height.gam2, all.terms = TRUE) # the first two plots show the interaction effect of the date smooth and each level of the Site factor variable.
+acf(residuals(height.gam2)) 
+```
+
+```{r}
+## Check gam
+par(mfrow = c(2, 2))
+gam.check(height.gam2)
+```
+
+```{r}
+## Compare models
+AIC(height.gam1, height.gam2) #gam 1 has no interaction, gam 2 has interaction. This shows that including the interaction between date and site improves the model's performance
+
+#overall, we're keeping GAM over LM, with the smoothed term (date) and with the date*site interaction (height.gam2)
+```
+
+##### Plot with Model Data
+```{r}
+height.x_range <- range(mussel_height_avg$date_dec)
+height.x_new <- seq(from = height.x_range[1], to = height.x_range[2], by = 0.1)
+height.x_new
+
+height.site_levels <- unique(mussel_height_avg$Site)
+```
+
+```{r}
+# Make the prediction dataframe
+height_pred <- expand.grid(height.x_new, height.site_levels) %>% 
+  as_tibble() %>% 
+  rename(date_dec = Var1, Site = Var2)
+head(height_pred)
+```
+
+```{r}
+# Predictions given the model
+height.y_pred <- predict(height.gam2, height_pred, se.fit = TRUE)
+height.y_pred
+```
+
+```{r}
+# 95% CI assuming normal distribution
+height.upr <- height.y_pred$fit + (2 * height.y_pred$se.fit) 
+height.lwr <- height.y_pred$fit - (2 * height.y_pred$se.fit)
+
+height_pred <- height_pred %>%
+  mutate(Avg.Height = height.y_pred$fit, 
+         upper = height.upr, 
+         lower = height.lwr)
+```
+
+###### Fig2B - Mussel Bed Height Model Data
+```{r}
+## Final plot with model output
+Fig2B <- mussel_height_avg %>% 
+  ggplot(aes(date_dec, Avg.Height, color = Site, fill = Site)) + 
+  geom_ribbon(data = height_pred, aes(ymin = height.lwr, ymax = height.upr, 
+                                 fill = Site, color = NULL), alpha = 0.5) + 
+  geom_line(data = height_pred) + 
+  geom_point(size = 5, alpha = 0.7, pch = 21, color = "black") +
+  theme_minimal() + 
+  theme(panel.background = element_blank(), 
+        axis.line = element_line (colour = "black"), 
+        axis.text.x = element_text(angle = 0, hjust = 0.5),
+        axis.text = element_text(size = 25),
+        axis.title = element_text(size = 25),
+        legend.position="none") +
+  labs(x = "Date", y = "Mussel Bed Height (cm)") +  
+  scale_color_manual(values=group.colors) +
+  scale_fill_manual(values=group.colors)
+
+Fig2B
+
+#ggsave("Fig2B.png", height=3, width=3, scale=3)
+
+```
+
