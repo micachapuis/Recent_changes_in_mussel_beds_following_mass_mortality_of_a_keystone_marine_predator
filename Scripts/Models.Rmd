@@ -77,7 +77,7 @@ mussel_height_predators$seastars.z <- as.numeric(scale(mussel_height_predators$N
 mussel_height_predators$year.z <- as.numeric(scale(mussel_height_predators$Year))
 ```
 
-###### Model
+<!-- ###### Model -->
 ```{r}
 height.pred.model <- lm(Avg.Height ~ year.z + whelks.z + seastars.z, data = mussel_height_predators)
 
@@ -137,7 +137,7 @@ calculate_average_variable <- function(end_date, data, variable) {
 ```
 
 
-#### Mussel Cover
+<!-- #### Mussel Cover -->
 
 Make new df "mussels.abiotic" with the same data as mussels + will add wave data
 
