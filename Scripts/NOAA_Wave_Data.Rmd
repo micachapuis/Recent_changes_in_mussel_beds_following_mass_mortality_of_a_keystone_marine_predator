@@ -2,7 +2,7 @@
 title: "NOAA_Wave_Data"
 author: "Micaela Chapuis"
 date: "2024-07-09"
-output: html_document
+output: github_document
 ---
 
 ```{r}
@@ -15,7 +15,7 @@ library(mgcv)
 
 ## Making Dataset
 Import all NOAA CSV files and join them into one data set
-```{r}
+```{r message = FALSE}
 noaa_data <- list.files(path = "../Data/NOAA_Buoy_46240/Raw NOAA Data/csv files",  # Identify all CSV files in the folder 
   pattern = "*.csv", full.names = TRUE) %>% 
   lapply(read_csv) %>%                              # Store all files in list

@@ -2,7 +2,7 @@
 title: "Mussels Plots"
 author: "Micaela Chapuis"
 date: "2024-07-10"
-output: html_document
+output: github_document
 ---
 
 ```{r}

@@ -2,7 +2,7 @@
 title: "Predators_Data"
 author: "Micaela Chapuis"
 date: "2024-07-12"
-output: html_document
+output: github_document
 ---
 
 ```{r}
