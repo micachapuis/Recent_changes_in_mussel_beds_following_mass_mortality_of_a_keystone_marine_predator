@@ -7,7 +7,7 @@ Micaela Chapuis
 library(here)
 ```
 
-    ## here() starts at /Users/micachapuis/GitHub/Chapuis_etal_SeastarMusselProject
+    ## here() starts at /Users/micachapuis/GitHub/Recent_changes_in_mussel_beds_following_mass_mortality_of_a_keystone_marine_predator
 
 ``` r
 library(tidyverse)
@@ -42,7 +42,21 @@ library(mgcv)
 
 ``` r
 library(broom)
+library(ggResidpanel)
+library(car)
 ```
+
+    ## Loading required package: carData
+    ## 
+    ## Attaching package: 'car'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
 
 ## Whelks
 
@@ -290,6 +304,26 @@ tidy(stars.m2)
     ## 3 SiteWest      -2.19      1.53     -1.43    0.182
 
 ``` r
+resid_panel(stars.m2)
+```
+
+![](Predators_Data_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+
+``` r
+plot(stars.m2, 3)
+```
+
+![](Predators_Data_files/figure-gfm/unnamed-chunk-18-3.png)<!-- -->
+
+``` r
+ncvTest(stars.m2)
+```
+
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 1.526957, Df = 1, p = 0.21657
+
+``` r
 glimpse(sd)
 ```
 
@@ -419,154 +453,6 @@ lt_stars <- seastars %>% group_by(Year,Site) %>% summarize(Num.Seastars = mean(N
     ## `summarise()` has grouped output by 'Year'. You can override using the
     ## `.groups` argument.
 
-Most of the code from here on (within this section) was written by Robin
-Elahi
-
-Following this: <https://rpubs.com/markpayne/164550>
-
-``` r
-#linear model with year site interaction
-lts.m1 <- lm(Num.Seastars ~ Year * Site, data = lt_stars)
-summary(lts.m1)
-```
-
-    ## 
-    ## Call:
-    ## lm(formula = Num.Seastars ~ Year * Site, data = lt_stars)
-    ## 
-    ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -55.357 -17.877  -6.283  11.465 104.868 
-    ## 
-    ## Coefficients:
-    ##                Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)   3698.0791   760.8479   4.860 2.78e-05 ***
-    ## Year            -1.8322     0.3799  -4.823 3.10e-05 ***
-    ## SiteWest       228.0416  1064.9396   0.214    0.832    
-    ## Year:SiteWest   -0.1001     0.5315  -0.188    0.852    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 31.52 on 33 degrees of freedom
-    ##   (3 observations deleted due to missingness)
-    ## Multiple R-squared:  0.6283, Adjusted R-squared:  0.5945 
-    ## F-statistic:  18.6 on 3 and 33 DF,  p-value: 3.054e-07
-
-``` r
-acf(residuals(lts.m1)) 
-```
-
-![](Predators_Data_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
-
-``` r
-# THIS IS THE MODEL WE CHOSE
-#linear model without year site interaction
-lts.m2 <- lm(Num.Seastars ~ Year + Site, data = lt_stars)
-summary(lts.m2)
-```
-
-    ## 
-    ## Call:
-    ## lm(formula = Num.Seastars ~ Year + Site, data = lt_stars)
-    ## 
-    ## Residuals:
-    ##    Min     1Q Median     3Q    Max 
-    ## -52.88 -17.95  -6.65  12.49 105.33 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 3800.5207   524.5614   7.245 2.19e-08 ***
-    ## Year          -1.8833     0.2619  -7.192 2.56e-08 ***
-    ## SiteWest      27.4275    10.2584   2.674   0.0114 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 31.07 on 34 degrees of freedom
-    ##   (3 observations deleted due to missingness)
-    ## Multiple R-squared:  0.6279, Adjusted R-squared:  0.606 
-    ## F-statistic: 28.69 on 2 and 34 DF,  p-value: 5.02e-08
-
-``` r
-acf(residuals(lts.m2)) 
-```
-
-![](Predators_Data_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
-
-``` r
-glimpse(lt_stars)
-```
-
-    ## Rows: 40
-    ## Columns: 3
-    ## Groups: Year [20]
-    ## $ Year         <int> 1954, 1954, 1955, 1955, 1985, 1985, 1995, 1995, 2001, 200…
-    ## $ Site         <chr> "East", "West", "East", "West", "East", "West", "East", "…
-    ## $ Num.Seastars <dbl> 113.0, 95.0, 138.0, 113.0, 62.0, 148.0, 13.5, 176.0, 24.0…
-
-``` r
-lt_stars <- lt_stars %>% 
-  mutate(Site = as.factor(Site))
-lt_stars
-```
-
-    ## # A tibble: 40 × 3
-    ## # Groups:   Year [20]
-    ##     Year Site  Num.Seastars
-    ##    <int> <fct>        <dbl>
-    ##  1  1954 East         113  
-    ##  2  1954 West          95  
-    ##  3  1955 East         138  
-    ##  4  1955 West         113  
-    ##  5  1985 East          62  
-    ##  6  1985 West         148  
-    ##  7  1995 East          13.5
-    ##  8  1995 West         176  
-    ##  9  2001 East          24  
-    ## 10  2001 West         128  
-    ## # ℹ 30 more rows
-
-``` r
-## No interaction between date and site
-ltsgam1 <- gam(Num.Seastars ~ Year + Site, data = lt_stars, method = "ML") # won't run with smoothed year
-ltsgam1_summary <- summary(ltsgam1)
-ltsgam1_summary$p.table
-```
-
-    ##                Estimate  Std. Error   t value     Pr(>|t|)
-    ## (Intercept) 3800.520741 524.5613964  7.245140 2.190216e-08
-    ## Year          -1.883349   0.2618762 -7.191753 2.557018e-08
-    ## SiteWest      27.427476  10.2583973  2.673661 1.144487e-02
-
-``` r
-ltsgam1_summary$s.table
-```
-
-    ## NULL
-
-``` r
-par(mfrow = c(1, 2))
-acf(residuals(ltsgam1)) 
-```
-
-![](Predators_Data_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
-
-``` r
-## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
-# Here we compare linear model to GAM
-
-AIC(lts.m2, ltsgam1) # lower AIC = better performing model --> they're the same
-```
-
-    ##         df      AIC
-    ## lts.m2   4 364.1559
-    ## ltsgam1  4 364.1559
-
-``` r
-#so we're using the linear model
-```
-
-##### Plot with Model Data
-
 \######Fig 3 - Long Term Seastar Abundance
 
 ``` r
@@ -607,7 +493,7 @@ Fig3
     ## Warning: Removed 3 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
 #ggsave(here("Figures", "Fig3.pdf", height=3, width=4, scale=2.5, bg="white"))
@@ -660,7 +546,7 @@ summary(whelks.m1)
 acf(residuals(whelks.m1)) 
 ```
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 #THIS IS THE MODEL WE CHOSE
@@ -691,7 +577,7 @@ summary(whelks.m2)
 acf(residuals(whelks.m2)) 
 ```
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 tidy(whelks.m2)
@@ -703,6 +589,26 @@ tidy(whelks.m2)
     ## 1 (Intercept) -244.      250.       -0.976   0.354
     ## 2 Year           0.123     0.124     0.989   0.348
     ## 3 SiteWest       0.346     0.960     0.360   0.727
+
+``` r
+resid_panel(whelks.m2)
+```
+
+![](Predators_Data_files/figure-gfm/unnamed-chunk-27-2.png)<!-- -->
+
+``` r
+plot(whelks.m2, 3)
+```
+
+![](Predators_Data_files/figure-gfm/unnamed-chunk-27-3.png)<!-- -->
+
+``` r
+ncvTest(whelks.m2)
+```
+
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 1.105959, Df = 1, p = 0.29296
 
 ``` r
 AIC(whelks.m1, whelks.m2) #without the interaction = better
@@ -769,13 +675,13 @@ par(mfrow = c(1, 2))
 plot(wgam1, all.terms = TRUE)
 ```
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 ``` r
 acf(residuals(wgam1)) 
 ```
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-35-2.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-30-2.png)<!-- -->
 
 ``` r
 ## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
@@ -821,7 +727,7 @@ Fig2D
     ## Warning: No shared levels found between `names(values)` of the manual scale and the
     ## data's colour values.
 
-![](Predators_Data_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](Predators_Data_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 #ggsave(here("Figures", "Fig2D.png", height=3, width=3, scale=3))

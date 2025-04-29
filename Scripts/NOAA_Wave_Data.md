@@ -7,7 +7,7 @@ Micaela Chapuis
 library(here)
 ```
 
-    ## here() starts at /Users/micachapuis/GitHub/Chapuis_etal_SeastarMusselProject
+    ## here() starts at /Users/micachapuis/GitHub/Recent_changes_in_mussel_beds_following_mass_mortality_of_a_keystone_marine_predator
 
 ``` r
 library(tidyverse)
@@ -40,6 +40,23 @@ library(mgcv)
     ##     collapse
     ## 
     ## This is mgcv 1.9-1. For overview type 'help("mgcv-package")'.
+
+``` r
+library(ggResidpanel)
+library(car)
+```
+
+    ## Loading required package: carData
+    ## 
+    ## Attaching package: 'car'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
 
 ## Making Dataset
 
@@ -290,6 +307,26 @@ tidy(wht.m1)
     ## 2 date_dec      0.00878    0.0107     0.818   0.421
 
 ``` r
+resid_panel(wht.m1)
+```
+
+![](NOAA_Wave_Data_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+
+``` r
+plot(wht.m1, 3)
+```
+
+![](NOAA_Wave_Data_files/figure-gfm/unnamed-chunk-19-3.png)<!-- -->
+
+``` r
+ncvTest(wht.m1)
+```
+
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 0.1678861, Df = 1, p = 0.682
+
+``` r
 whtgam1 <- gam(Wave.Height ~ date_dec, data = waves_avg, method = "ML")
 whtgam1_summary <- summary(whtgam1)
 whtgam1_summary$p.table
@@ -400,6 +437,26 @@ tidy(wtmp.m1)
     ##   <chr>          <dbl>     <dbl>     <dbl>   <dbl>
     ## 1 (Intercept)  93.5     142.         0.659   0.516
     ## 2 date_dec     -0.0393    0.0703    -0.559   0.581
+
+``` r
+resid_panel(wtmp.m1)
+```
+
+![](NOAA_Wave_Data_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+``` r
+plot(wtmp.m1, 3)
+```
+
+![](NOAA_Wave_Data_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+``` r
+ncvTest(wtmp.m1)
+```
+
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 0.0002083435, Df = 1, p = 0.98848
 
 ``` r
 wtmpgam1 <- gam(Water.Temp ~ date_dec, data = waves_avg, method = "ML")

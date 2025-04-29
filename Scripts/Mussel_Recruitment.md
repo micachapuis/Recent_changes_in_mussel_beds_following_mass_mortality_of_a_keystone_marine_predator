@@ -7,7 +7,7 @@ Micaela Chapuis
 library(here)
 ```
 
-    ## here() starts at /Users/micachapuis/GitHub/Chapuis_etal_SeastarMusselProject
+    ## here() starts at /Users/micachapuis/GitHub/Recent_changes_in_mussel_beds_following_mass_mortality_of_a_keystone_marine_predator
 
 ``` r
 library(tidyverse)
@@ -28,7 +28,20 @@ library(tidyverse)
 ``` r
 library(lubridate)
 library(broom) # for tidy tables
+library(car)
 ```
+
+    ## Loading required package: carData
+    ## 
+    ## Attaching package: 'car'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
 
 ## Mussel Recruitment
 
@@ -208,6 +221,14 @@ summary(recruit_lm)
     ## Residual standard error: 1.381 on 59 degrees of freedom
     ## Multiple R-squared:  0.4865, Adjusted R-squared:  0.4691 
     ## F-statistic: 27.95 on 2 and 59 DF,  p-value: 2.885e-09
+
+``` r
+ncvTest(recruit_lm)
+```
+
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 1.462871, Df = 1, p = 0.22647
 
 #### TukeyHSD
 

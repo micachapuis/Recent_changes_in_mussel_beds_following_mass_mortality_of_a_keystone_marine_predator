@@ -11,6 +11,8 @@ library(tidyverse)
 library(lubridate)
 library(mgcv)
 library(broom)
+library(ggResidpanel)
+library(car)
 ```
 
 ## Whelks
@@ -170,6 +172,9 @@ stars.m2 <- lm(Num.Seastars ~ Year + Site, data = sd)
 summary(stars.m2)
 acf(residuals(stars.m2)) 
 tidy(stars.m2)
+resid_panel(stars.m2)
+plot(stars.m2, 3)
+ncvTest(stars.m2)
 ```
 
 
@@ -229,51 +234,6 @@ Fig2C
 lt_stars <- seastars %>% group_by(Year,Site) %>% summarize(Num.Seastars = mean(Num.Seastars))
 ```
 
-Most of the code from here on (within this section) was written by Robin Elahi
-
-Following this: https://rpubs.com/markpayne/164550
-```{r}
-#linear model with year site interaction
-lts.m1 <- lm(Num.Seastars ~ Year * Site, data = lt_stars)
-summary(lts.m1)
-acf(residuals(lts.m1)) 
-```
-
-```{r}
-# THIS IS THE MODEL WE CHOSE
-#linear model without year site interaction
-lts.m2 <- lm(Num.Seastars ~ Year + Site, data = lt_stars)
-summary(lts.m2)
-acf(residuals(lts.m2)) 
-```
-
-```{r}
-glimpse(lt_stars)
-lt_stars <- lt_stars %>% 
-  mutate(Site = as.factor(Site))
-lt_stars
-```
-
-```{r}
-## No interaction between date and site
-ltsgam1 <- gam(Num.Seastars ~ Year + Site, data = lt_stars, method = "ML") # won't run with smoothed year
-ltsgam1_summary <- summary(ltsgam1)
-ltsgam1_summary$p.table
-ltsgam1_summary$s.table
-par(mfrow = c(1, 2))
-acf(residuals(ltsgam1)) 
-```
-
-
-```{r}
-## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
-# Here we compare linear model to GAM
-
-AIC(lts.m2, ltsgam1) # lower AIC = better performing model --> they're the same
-#so we're using the linear model
-```
-
-##### Plot with Model Data
 ######Fig 3 - Long Term Seastar Abundance
 ```{r}
 Fig3 <- lt_stars %>% 
@@ -326,6 +286,9 @@ whelks.m2 <- lm(Num.Whelks ~ Year + Site, data = wd)
 summary(whelks.m2)
 acf(residuals(whelks.m2)) 
 tidy(whelks.m2)
+resid_panel(whelks.m2)
+plot(whelks.m2, 3)
+ncvTest(whelks.m2)
 ```
 
 

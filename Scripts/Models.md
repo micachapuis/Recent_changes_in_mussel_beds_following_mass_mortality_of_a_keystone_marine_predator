@@ -7,7 +7,7 @@ Micaela Chapuis
 library(here)
 ```
 
-    ## here() starts at /Users/micachapuis/GitHub/Chapuis_etal_SeastarMusselProject
+    ## here() starts at /Users/micachapuis/GitHub/Recent_changes_in_mussel_beds_following_mass_mortality_of_a_keystone_marine_predator
 
 ``` r
 library(tidyverse)
@@ -28,7 +28,21 @@ library(tidyverse)
 ``` r
 library(lubridate)
 library(broom)
+library(ggResidpanel)
+library(car)
 ```
+
+    ## Loading required package: carData
+    ## 
+    ## Attaching package: 'car'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
 
 ``` r
 mussel_cover_yearly_avg <- read.csv(here("Data", "Data for Models", "mussel_cover_yearly_avg.csv"))
@@ -109,63 +123,24 @@ tidy(cover.pred.model)
     ## 5 seastars.z      1.27      4.19     0.304 0.770
 
 ``` r
-plot(cover.pred.model)
+resid_panel(cover.pred.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-6-4.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
-qqnorm(resid(cover.pred.model))
-qqline(resid(cover.pred.model))
+plot(cover.pred.model, 3)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-6-5.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
-hist(resid(cover.pred.model))
+ncvTest(cover.pred.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-6-6.png)<!-- -->
-
-``` r
-sjPlot::plot_model(cover.pred.model, type="diag")
-```
-
-    ## [[1]]
-
-![](Models_files/figure-gfm/unnamed-chunk-6-7.png)<!-- -->
-
-    ## 
-    ## [[2]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-6-8.png)<!-- -->
-
-    ## 
-    ## [[3]]
-
-![](Models_files/figure-gfm/unnamed-chunk-6-9.png)<!-- -->
-
-    ## 
-    ## [[4]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-6-10.png)<!-- -->
-
-``` r
-tidy(cover.pred.model)
-```
-
-    ## # A tibble: 5 × 5
-    ##   term        estimate std.error statistic    p.value
-    ##   <chr>          <dbl>     <dbl>     <dbl>      <dbl>
-    ## 1 (Intercept)    59.6       4.69    12.7   0.00000430
-    ## 2 year.z         10.1       2.76     3.65  0.00818   
-    ## 3 SiteWest       -4.07      7.34    -0.555 0.596     
-    ## 4 whelks.z        6.89      3.70     1.86  0.105     
-    ## 5 seastars.z      1.27      4.19     0.304 0.770
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 0.02353997, Df = 1, p = 0.87806
 
 ### Mussel Height + Predators
 
@@ -226,50 +201,24 @@ tidy(height.pred.model)
     ## 4 seastars.z     -5.34      3.43     -1.56 0.158
 
 ``` r
-plot(height.pred.model) 
+resid_panel(height.pred.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
-qqnorm(resid(height.pred.model))
-qqline(resid(height.pred.model))
+plot(height.pred.model, 3)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
 
 ``` r
-hist(resid(height.pred.model))
+ncvTest(height.pred.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->
-
-``` r
-sjPlot::plot_model(height.pred.model, type="diag")
-```
-
-    ## [[1]]
-
-![](Models_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->
-
-    ## 
-    ## [[2]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->
-
-    ## 
-    ## [[3]]
-
-![](Models_files/figure-gfm/unnamed-chunk-10-9.png)<!-- -->
-
-    ## 
-    ## [[4]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-10-10.png)<!-- -->
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 0.0009687155, Df = 1, p = 0.97517
 
 ## Abiotic Factors
 
@@ -417,50 +366,24 @@ tidy(cover.abiotic.model)
     ## 4 wtmp.z         -4.65      5.62    -0.828 0.446
 
 ``` r
-plot(cover.abiotic.model)
+resid_panel(cover.abiotic.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-21-4.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
-qqnorm(resid(cover.abiotic.model))
-qqline(resid(cover.abiotic.model))
+plot(cover.abiotic.model, 3)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-21-5.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
 
 ``` r
-hist(resid(cover.abiotic.model))
+ncvTest(cover.abiotic.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-21-6.png)<!-- -->
-
-``` r
-sjPlot::plot_model(cover.abiotic.model, type="diag")
-```
-
-    ## [[1]]
-
-![](Models_files/figure-gfm/unnamed-chunk-21-7.png)<!-- -->
-
-    ## 
-    ## [[2]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-21-8.png)<!-- -->
-
-    ## 
-    ## [[3]]
-
-![](Models_files/figure-gfm/unnamed-chunk-21-9.png)<!-- -->
-
-    ## 
-    ## [[4]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-21-10.png)<!-- -->
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 0.393752, Df = 1, p = 0.53033
 
 #### Mussel Bed Height
 
@@ -557,47 +480,21 @@ tidy(height.abiotic.model)
     ## 4 wtmp.z          5.03      2.91      1.73 0.144
 
 ``` r
-plot(height.abiotic.model)
+resid_panel(height.abiotic.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-28-2.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-28-3.png)<!-- -->![](Models_files/figure-gfm/unnamed-chunk-28-4.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ``` r
-qqnorm(resid(height.abiotic.model))
-qqline(resid(height.abiotic.model))
+plot(height.abiotic.model, 3)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-28-5.png)<!-- -->
+![](Models_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
 
 ``` r
-hist(resid(height.abiotic.model))
+ncvTest(height.abiotic.model)
 ```
 
-![](Models_files/figure-gfm/unnamed-chunk-28-6.png)<!-- -->
-
-``` r
-sjPlot::plot_model(height.abiotic.model, type="diag")
-```
-
-    ## [[1]]
-
-![](Models_files/figure-gfm/unnamed-chunk-28-7.png)<!-- -->
-
-    ## 
-    ## [[2]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-28-8.png)<!-- -->
-
-    ## 
-    ## [[3]]
-
-![](Models_files/figure-gfm/unnamed-chunk-28-9.png)<!-- -->
-
-    ## 
-    ## [[4]]
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](Models_files/figure-gfm/unnamed-chunk-28-10.png)<!-- -->
+    ## Non-constant Variance Score Test 
+    ## Variance formula: ~ fitted.values 
+    ## Chisquare = 1.166986, Df = 1, p = 0.28002

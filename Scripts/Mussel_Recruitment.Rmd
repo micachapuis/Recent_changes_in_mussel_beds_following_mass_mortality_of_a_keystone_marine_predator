@@ -10,6 +10,7 @@ library(here)
 library(tidyverse)
 library(lubridate)
 library(broom) # for tidy tables
+library(car)
 ```
 
 ## Mussel Recruitment
@@ -118,6 +119,7 @@ Because ANOVA is a linear model, we can run the same code but using the lm funct
 ```{r}
 recruit_lm <- lm(logRecruit ~ Year, data = recruit_log)
 summary(recruit_lm)
+ncvTest(recruit_lm)
 ```
 
 

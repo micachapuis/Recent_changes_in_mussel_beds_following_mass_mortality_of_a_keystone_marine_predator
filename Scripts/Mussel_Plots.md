@@ -7,7 +7,7 @@ Micaela Chapuis
 library(here)
 ```
 
-    ## here() starts at /Users/micachapuis/GitHub/Chapuis_etal_SeastarMusselProject
+    ## here() starts at /Users/micachapuis/GitHub/Recent_changes_in_mussel_beds_following_mass_mortality_of_a_keystone_marine_predator
 
 ``` r
 library(tidyverse)
@@ -423,7 +423,7 @@ k.check(cover.gam2)
 ```
 
     ##             k'      edf  k-index p-value
-    ## s(date_dec)  9 8.649724 1.169232   0.725
+    ## s(date_dec)  9 8.649724 1.169232   0.705
 
 ``` r
 ## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
@@ -556,7 +556,7 @@ gam.check(cover.gam2)
     ## 
     ##                        k'  edf k-index p-value    
     ## s(date_dec):SiteEast 9.00 6.85    0.63  <2e-16 ***
-    ## s(date_dec):SiteWest 9.00 7.88    0.63  <2e-16 ***
+    ## s(date_dec):SiteWest 9.00 7.88    0.63   0.005 ** 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -921,14 +921,14 @@ gam.check(height.gam2)
     ## indicate that k is too low, especially if edf is close to k'.
     ## 
     ##               k'  edf k-index p-value
-    ## s(date_dec) 9.00 8.55    1.27     0.9
+    ## s(date_dec) 9.00 8.55    1.27    0.89
 
 ``` r
 k.check(height.gam2)
 ```
 
     ##             k'      edf  k-index p-value
-    ## s(date_dec)  9 8.547393 1.266241    0.88
+    ## s(date_dec)  9 8.547393 1.266241  0.8825
 
 ``` r
 ## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
@@ -1059,9 +1059,11 @@ gam.check(height.gam2)
     ## Basis dimension (k) checking results. Low p-value (k-index<1) may
     ## indicate that k is too low, especially if edf is close to k'.
     ## 
-    ##                        k'  edf k-index p-value
-    ## s(date_dec):SiteEast 9.00 5.94    0.86    0.14
-    ## s(date_dec):SiteWest 9.00 7.67    0.86    0.12
+    ##                        k'  edf k-index p-value  
+    ## s(date_dec):SiteEast 9.00 5.94    0.86    0.10 .
+    ## s(date_dec):SiteWest 9.00 7.67    0.86    0.06 .
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ``` r
 ## Compare models

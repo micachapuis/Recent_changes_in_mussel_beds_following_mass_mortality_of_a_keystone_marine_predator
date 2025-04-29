@@ -11,6 +11,8 @@ library(tidyverse)
 library(lubridate)
 library(broom)
 library(mgcv)
+library(ggResidpanel)
+library(car)
 ```
 
 ## Making Dataset
@@ -170,6 +172,9 @@ wht.m1 <- lm(Wave.Height ~ date_dec, data = waves_avg)
 summary(wht.m1)
 acf(residuals(wht.m1)) 
 tidy(wht.m1)
+resid_panel(wht.m1)
+plot(wht.m1, 3)
+ncvTest(wht.m1)
 ```
 ```{r}
 whtgam1 <- gam(Wave.Height ~ date_dec, data = waves_avg, method = "ML")
@@ -214,6 +219,9 @@ wtmp.m1 <- lm(Water.Temp ~ date_dec, data = waves_avg)
 summary(wtmp.m1)
 acf(residuals(wtmp.m1)) 
 tidy(wtmp.m1)
+resid_panel(wtmp.m1)
+plot(wtmp.m1, 3)
+ncvTest(wtmp.m1)
 ```
 
 ```{r}
