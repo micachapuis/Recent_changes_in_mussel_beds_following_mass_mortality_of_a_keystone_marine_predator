@@ -10,7 +10,6 @@ library(here)
 library(tidyverse)
 library(lubridate)
 library(mgcv)
-
 ```
 
 
@@ -268,6 +267,7 @@ gam2_summary$s.table
 par(mfrow = c(2, 2))
 plot(cover.gam2, all.terms = TRUE) # the first two plots show the interaction effect of the date smooth and each level of the Site factor variable.
 acf(residuals(cover.gam2)) 
+summary(cover.gam2)
 ```
 
 ```{r}
@@ -434,6 +434,7 @@ gam2_summary$s.table
 par(mfrow = c(2, 2))
 plot(height.gam2, all.terms = TRUE) # the first two plots show the interaction effect of the date smooth and each level of the Site factor variable.
 acf(residuals(height.gam2)) 
+summary(height.gam2)
 ```
 
 ```{r}
