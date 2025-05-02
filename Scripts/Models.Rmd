@@ -47,7 +47,7 @@ mussel_cover_predators$year.z <- as.numeric(scale(mussel_cover_predators$Year))
 
 ###### Model
 ```{r}
-cover.pred.model <- lm(PCover ~ year.z +Site + whelks.z + seastars.z, data = mussel_cover_predators)
+cover.pred.model <- lm(PCover ~ year.z + whelks.z + seastars.z, data = mussel_cover_predators)
 
 summary(cover.pred.model)
 tidy(cover.pred.model)
