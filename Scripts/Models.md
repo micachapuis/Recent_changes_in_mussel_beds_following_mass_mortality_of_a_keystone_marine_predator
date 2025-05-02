@@ -80,47 +80,44 @@ mussel_cover_predators$year.z <- as.numeric(scale(mussel_cover_predators$Year))
 ###### Model
 
 ``` r
-cover.pred.model <- lm(PCover ~ year.z +Site + whelks.z + seastars.z, data = mussel_cover_predators)
+cover.pred.model <- lm(PCover ~ year.z + whelks.z + seastars.z, data = mussel_cover_predators)
 
 summary(cover.pred.model)
 ```
 
     ## 
     ## Call:
-    ## lm(formula = PCover ~ year.z + Site + whelks.z + seastars.z, 
-    ##     data = mussel_cover_predators)
+    ## lm(formula = PCover ~ year.z + whelks.z + seastars.z, data = mussel_cover_predators)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -13.334  -6.029   0.492   6.316  11.829 
+    ## -13.493  -6.641   1.001   6.366  13.459 
     ## 
     ## Coefficients:
     ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)   59.631      4.688  12.719  4.3e-06 ***
-    ## year.z        10.089      2.764   3.650  0.00818 ** 
-    ## SiteWest      -4.074      7.336  -0.555  0.59593    
-    ## whelks.z       6.892      3.698   1.863  0.10468    
-    ## seastars.z     1.274      4.187   0.304  0.76982    
+    ## (Intercept)   57.696      2.997  19.248  5.5e-08 ***
+    ## year.z        10.227      2.631   3.887  0.00463 ** 
+    ## whelks.z       7.074      3.521   2.009  0.07941 .  
+    ## seastars.z     2.472      3.430   0.721  0.49160    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 10.81 on 7 degrees of freedom
+    ## Residual standard error: 10.33 on 8 degrees of freedom
     ##   (10 observations deleted due to missingness)
-    ## Multiple R-squared:  0.7728, Adjusted R-squared:  0.6429 
-    ## F-statistic: 5.951 on 4 and 7 DF,  p-value: 0.02072
+    ## Multiple R-squared:  0.7627, Adjusted R-squared:  0.6738 
+    ## F-statistic: 8.573 on 3 and 8 DF,  p-value: 0.007016
 
 ``` r
 tidy(cover.pred.model)
 ```
 
-    ## # A tibble: 5 × 5
-    ##   term        estimate std.error statistic    p.value
-    ##   <chr>          <dbl>     <dbl>     <dbl>      <dbl>
-    ## 1 (Intercept)    59.6       4.69    12.7   0.00000430
-    ## 2 year.z         10.1       2.76     3.65  0.00818   
-    ## 3 SiteWest       -4.07      7.34    -0.555 0.596     
-    ## 4 whelks.z        6.89      3.70     1.86  0.105     
-    ## 5 seastars.z      1.27      4.19     0.304 0.770
+    ## # A tibble: 4 × 5
+    ##   term        estimate std.error statistic      p.value
+    ##   <chr>          <dbl>     <dbl>     <dbl>        <dbl>
+    ## 1 (Intercept)    57.7       3.00    19.2   0.0000000550
+    ## 2 year.z         10.2       2.63     3.89  0.00463     
+    ## 3 whelks.z        7.07      3.52     2.01  0.0794      
+    ## 4 seastars.z      2.47      3.43     0.721 0.492
 
 ``` r
 resid_panel(cover.pred.model)
@@ -140,7 +137,7 @@ ncvTest(cover.pred.model)
 
     ## Non-constant Variance Score Test 
     ## Variance formula: ~ fitted.values 
-    ## Chisquare = 0.02353997, Df = 1, p = 0.87806
+    ## Chisquare = 0.02431631, Df = 1, p = 0.87608
 
 ### Mussel Height + Predators
 

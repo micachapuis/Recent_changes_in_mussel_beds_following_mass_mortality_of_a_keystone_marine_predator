@@ -416,14 +416,14 @@ gam.check(cover.gam2)
     ## indicate that k is too low, especially if edf is close to k'.
     ## 
     ##               k'  edf k-index p-value
-    ## s(date_dec) 9.00 8.65    1.17    0.76
+    ## s(date_dec) 9.00 8.65    1.17    0.78
 
 ``` r
 k.check(cover.gam2)
 ```
 
     ##             k'      edf  k-index p-value
-    ## s(date_dec)  9 8.649724 1.169232   0.705
+    ## s(date_dec)  9 8.649724 1.169232    0.78
 
 ``` r
 ## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
@@ -536,6 +536,34 @@ acf(residuals(cover.gam2))
 ![](Mussel_Plots_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
+summary(cover.gam2)
+```
+
+    ## 
+    ## Family: gaussian 
+    ## Link function: identity 
+    ## 
+    ## Formula:
+    ## PCover ~ s(date_dec, by = Site) + Site
+    ## 
+    ## Parametric coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  62.5202     0.7563  82.668  < 2e-16 ***
+    ## SiteWest     -5.9645     1.0796  -5.525  2.5e-06 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Approximate significance of smooth terms:
+    ##                        edf Ref.df     F p-value    
+    ## s(date_dec):SiteEast 6.848  7.938 49.88  <2e-16 ***
+    ## s(date_dec):SiteWest 7.884  8.667 77.13  <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## R-sq.(adj) =  0.953   Deviance explained = 96.7%
+    ## -ML = 179.49  Scale est. = 15.992    n = 55
+
+``` r
 ## Check gam
 par(mfrow = c(2, 2))
 gam.check(cover.gam2)
@@ -556,7 +584,7 @@ gam.check(cover.gam2)
     ## 
     ##                        k'  edf k-index p-value    
     ## s(date_dec):SiteEast 9.00 6.85    0.63  <2e-16 ***
-    ## s(date_dec):SiteWest 9.00 7.88    0.63   0.005 ** 
+    ## s(date_dec):SiteWest 9.00 7.88    0.63  <2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -921,14 +949,14 @@ gam.check(height.gam2)
     ## indicate that k is too low, especially if edf is close to k'.
     ## 
     ##               k'  edf k-index p-value
-    ## s(date_dec) 9.00 8.55    1.27    0.89
+    ## s(date_dec) 9.00 8.55    1.27    0.85
 
 ``` r
 k.check(height.gam2)
 ```
 
     ##             k'      edf  k-index p-value
-    ## s(date_dec)  9 8.547393 1.266241  0.8825
+    ## s(date_dec)  9 8.547393 1.266241   0.865
 
 ``` r
 ## Compare models - "Generally, the smaller the AIC, the “better” is the predictive performance of the model."
@@ -1041,6 +1069,34 @@ acf(residuals(height.gam2))
 ![](Mussel_Plots_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ``` r
+summary(height.gam2)
+```
+
+    ## 
+    ## Family: gaussian 
+    ## Link function: identity 
+    ## 
+    ## Formula:
+    ## Avg.Height ~ s(date_dec, by = Site) + Site
+    ## 
+    ## Parametric coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  18.4069     0.4883   37.70   <2e-16 ***
+    ## SiteWest     13.9153     0.6970   19.96   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Approximate significance of smooth terms:
+    ##                        edf Ref.df      F p-value    
+    ## s(date_dec):SiteEast 5.940  7.092  65.21  <2e-16 ***
+    ## s(date_dec):SiteWest 7.674  8.545 125.29  <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## R-sq.(adj) =  0.973   Deviance explained =   98%
+    ## -ML = 152.36  Scale est. = 6.667     n = 55
+
+``` r
 ## Check gam
 par(mfrow = c(2, 2))
 gam.check(height.gam2)
@@ -1059,11 +1115,9 @@ gam.check(height.gam2)
     ## Basis dimension (k) checking results. Low p-value (k-index<1) may
     ## indicate that k is too low, especially if edf is close to k'.
     ## 
-    ##                        k'  edf k-index p-value  
-    ## s(date_dec):SiteEast 9.00 5.94    0.86    0.10 .
-    ## s(date_dec):SiteWest 9.00 7.67    0.86    0.06 .
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##                        k'  edf k-index p-value
+    ## s(date_dec):SiteEast 9.00 5.94    0.86    0.12
+    ## s(date_dec):SiteWest 9.00 7.67    0.86    0.14
 
 ``` r
 ## Compare models
